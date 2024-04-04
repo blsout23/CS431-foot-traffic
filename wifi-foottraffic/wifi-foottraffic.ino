@@ -6,26 +6,30 @@
 #include <WiFiS3.h>
 #include "arduino_secrets.h" // file for sensitive info
 
+//char packetBuffer[256]; //buffer to hold incoming packet
+//char  ReplyBuffer[] = "acknowledged\n";       // a string to send back
+//IPAddress server(); // ip to connect to
+
+int status = WL_IDLE_STATUS;
+
 char ssid[] = SECRET_SSID;        // your network SSID (name)
-char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
-int keyIndex = 0;            // your network key index number (needed only for WEP)
+int keyIndex = 0;            // your network key index number (needed only forWEP)
+
 unsigned int localPort = 2390;      // local port to listen on
 
 WiFiUDP Udp;
-int status = WL_IDLE_STATUS;
 
 int motion = 0; //store IR value
 int volume = 0; //store volume value
 
 void setup() {
-  pinMode(A0, INPUT); //IR sensor
-  pinMode(A1, INPUT); //volume sensor
-
-  //Initialize serial and wait for port to open:
   Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
+
+  pinMode(D2, INPUT); //IR sensor
+  pinMode(D4, INPUT); //volume sensor
 
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
@@ -44,7 +48,7 @@ void setup() {
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(ssid);
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
-    status = WiFi.begin(ssid, pass);
+    status = WiFi.begin(ssid);
 
     // wait 10 seconds for connection:
     delay(10000);
@@ -58,19 +62,21 @@ void setup() {
 }
 
 void loop() {
-  motion = digitalRead(A0);
-  volume = digitalRead(A1);
+  motion = digitalRead(D2);
+  volume = digitalRead(D4);
 
   if (motion == HIGH){
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
     Udp.write(motion);
     Udp.endPacket();
+    Serial.println("MOTION");
   }
 
   if (volume == HIGH){
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
     Udp.write(volume);
     Udp.endPacket();
+    Serial.println("VOLUME");
   }
 }
 
