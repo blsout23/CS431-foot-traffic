@@ -1,23 +1,17 @@
 //INCOMPLETE
 //Based on example sketch "WiFi UDP Send and Receive String"
 
-//need to remove serial outputs, configure to work with python script
-
 #include <WiFiS3.h>
 #include "arduino_secrets.h" // file for sensitive info
-
-//char packetBuffer[256]; //buffer to hold incoming packet
-//char  ReplyBuffer[] = "acknowledged\n";       // a string to send back
-//IPAddress server(); // ip to connect to
 
 int status = WL_IDLE_STATUS;
 
 char ssid[] = SECRET_SSID;        // your network SSID (name)
 int keyIndex = 0;            // your network key index number (needed only forWEP)
 
-unsigned int localPort = 2390;      // local port to listen on
-
-WiFiUDP Udp;
+unsigned int localPort = 31415;      // local port to listen on
+IPAddress server(137, 146, 126, 121);
+WiFiClient client;
 
 int motion = 0; //store IR value
 int volume = 0; //store volume value
@@ -28,8 +22,8 @@ void setup() {
     ; // wait for serial port to connect. Needed for native USB port only
   }
 
-  pinMode(D2, INPUT); //IR sensor
-  pinMode(D4, INPUT); //volume sensor
+  pinMode(A0, INPUT); //IR sensor
+  pinMode(A1, INPUT); //volume sensor
 
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
@@ -47,9 +41,7 @@ void setup() {
   while (status != WL_CONNECTED) {
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(ssid);
-    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid);
-
     // wait 10 seconds for connection:
     delay(10000);
   }
@@ -57,26 +49,27 @@ void setup() {
   printWifiStatus();
 
   Serial.println("\nStarting connection to server...");
-  // if you get a connection, report back via serial:
-  Udp.begin(localPort);
+  
+  while (!client.connected()) {
+    Serial.println("Connection failed");
+    delay(10000);
+    client.connect(server, localPort);
+  }
+  Serial.println("Connection successful!");
 }
 
 void loop() {
-  motion = digitalRead(D2);
-  volume = digitalRead(D4);
+  motion = digitalRead(A0);
+  volume = digitalRead(A1);
 
   if (motion == HIGH){
-    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-    Udp.write(motion);
-    Udp.endPacket();
-    Serial.println("MOTION");
+    client.write(motion);
+    //Serial.println("MOTION");
   }
 
   if (volume == HIGH){
-    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-    Udp.write(volume);
-    Udp.endPacket();
-    Serial.println("VOLUME");
+    client.write(volume);
+    //Serial.println("VOLUME");
   }
 }
 
