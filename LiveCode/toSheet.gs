@@ -23,6 +23,7 @@ function doPost(e) {
 
   for (var i = 0; i < incLength; i++) {
     // add ping value from payload to the current recorded value in the sheet
+    // the pings are cumulative and will roll over from week to week
     var temp = sheet.getRange(hour, weekday).getValue();
     sheet.getRange(hour, weekday).setValue(values[i].value + temp);
   }
